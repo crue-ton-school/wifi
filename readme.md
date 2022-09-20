@@ -14,7 +14,7 @@ sudo make uninstall
 ```
 
 You can also pass "purge" which will remove the compiled wifi file where it was installed and get rid of the directory entirely
-``sh
+```sh
 cd (repo directory)
 sudo make purge
 ``` 
