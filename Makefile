@@ -20,4 +20,5 @@ uninstall:
 	rm -f $(BIN)/wifi
 
 purge:
+	rm -f $(BIN)/wifi
 	cd ..;rm -rf wifi
