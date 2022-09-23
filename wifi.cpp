@@ -3,67 +3,38 @@
  */
 
 #include <iostream>
+#include <unistd.h>
+#include <algorithm>
 #include <string>
 
 using namespace std;
 
-int connect() {
-  string ssid;
-  string password;
-  cout << "Enter WiFi SSID: ";
-  cin >> ssid;
-  cout << "Enter Password: ";
-	getline(cin, password);
+string elvCmd;
+void getsuper() {
+	// Check if ran with sudo/doas
+	string _c;
+	auto privs = geteuid();
 
-  #ifdef _WIN32
-  string cmd = "netsh wlan connect " + ssid;
-  system(cmd.c_str());
-  #endif
+	if (privs != 0) { 
+		cout << "Warning! Some flags require elevation!\n\n";
+		if (!system("which sudo > /dev/null 2>&1") && !system("which doas > /dev/null 2>&1")) {
+			cout << "sudo and doas found on system..." << endl << "Please choose one!" << endl;
+			cout << "[1] sudo\n[2] doas\n" << "[1-2]: ";
+			getline(cin, _c);
+			if (_c == "1") { elvCmd = "sudo";
+			} else if (_c == "2") { elvCmd = "doas";
+			} else { cout << "not valid choice!"; }
 
-  #ifdef linux
-  if (password.empty()) {
-    string cmd = "sudo nmcli d wifi connect " + ssid;
-    system(cmd.c_str());
-		return 0;
-  } else {
-    string cmd = "sudo nmcli d wifi connect " + ssid + " password " + password;
-    system(cmd.c_str());
-  }
-  #endif
-	return 0;
+		} else if (!system("which sudo > /dev/null 2>&1")) { 
+			elvCmd = "sudo";
+		} else if (!system("which doas > /dev/null 2>&1")) {
+			elvCmd = "doas";
+		} else {
+			throw std::runtime_error("sudo nor doas found!\nRun with a similar program for some flags for them to work!\n\n");
+		}
+	}
 }
 
-int testwifi() {
-  string website = "https://www.gnu.org";
-  bool askforinput = false;
-
-  #ifdef _WIN32
-  string cmd = "curl -s " + website + " >nul 2>&1";
-  #endif
-  #ifdef linux
-  string cmd = "curl -s " + website + " >/dev/null";
-  #endif
-
-  if (askforinput == true) {
-    cout << "Enter website of choice: ";
-    cin >> website;
-    int status = system(cmd.c_str());
-    if (status == 0) {
-      cout << "Connection is good!" << endl;
-    } else {
-			throw std::runtime_error("Connection seems to fail, check connections!\n");
-    }
-
-  } else if (askforinput == false) {
-    int status = system(cmd.c_str());
-    if (status == 0) {
-      cout << "Connection is good!" << endl;
-    } else {
-			throw std::runtime_error("Connection seems to fail, check connections!\n");
-    }
-  }
-	return 0;
-}
 
 string exec(string command) {
   char buffer[128];
@@ -87,28 +58,81 @@ string exec(string command) {
   return result;
 }
 
-void get_networks() {
-	string networks = exec("nmcli -t -f active,ssid dev wifi");
-	networks = networks.substr(networks.find(":") + 1);
-	cout << networks;
+int connect() {
+  string ssid;
+  string password;
+  cout << "Enter WiFi SSID: ";
+	getline(cin, password);
+  cout << "Enter Password: ";
+	getline(cin, password);
+	getsuper();
+
+  if (password.empty()) {
+    string cmd = elvCmd + " nmcli d wifi connect " + ssid;
+    system(cmd.c_str());
+		return 0;
+  } else {
+    string cmd = elvCmd + " nmcli d wifi connect " + ssid + " password " + password;
+    system(cmd.c_str());
+  }
+	return 0;
 }
 
+int testwifi() {
+  string website = "https://www.gnu.org";
+  bool askforinput = false;
+  string cmd = "curl -s " + website + " >/dev/null";
+
+  if (askforinput == true) {
+    cout << "Enter website of choice: ";
+    cin >> website;
+    int status = system(cmd.c_str());
+    if (status == 0) {
+      cout << "Connection is good!" << endl;
+    } else {
+			throw std::runtime_error("Connection seems to fail, check connections!\n");
+    }
+
+  } else if (askforinput == false) {
+    int status = system(cmd.c_str());
+    if (status == 0) {
+      cout << "Connection is good!" << endl;
+    } else {
+			throw std::runtime_error("Connection seems to fail, check connections!\n");
+    }
+  }
+	return 0;
+}
+
+void get_networks() {
+	string networks = exec("nmcli -t -f active,ssid dev wifi");
+	networks = networks.substr(networks.find(":") + 1);	
+	cout << networks << endl;
+}
+
+void disconnect() {
+	getsuper();
+	string currentConnection = exec("nmcli -t -f active,ssid dev wifi|grep \"^yes:\"");
+	currentConnection = currentConnection.substr(currentConnection.find("yes:") + 4);
+  string cmd = elvCmd + " nmcli con down id " + currentConnection;
+  system(cmd.c_str());
+}
+
+// add windows support to other flags
 int main(int argc, char * argv[]) {
   for (int i = 0; i < argc; ++i) {
     if (string(argv[i]) == "-t") {
       testwifi();
     } else if (string(argv[i]) == "-d") {
-      string currentConnection = exec("_c=$(nmcli -t -f active,ssid dev wifi | grep \"^yes\");echo ${_c##*:}");
-      string cmd = "sudo nmcli con down id " + currentConnection;
-      system(cmd.c_str());
+			disconnect();
     } else if (string(argv[i]) == "-c") {
       connect();
 		} else if (string(argv[i]) == "-g") {
 			get_networks();
     } else if (2 > argc) {
       cout << "All available flags:" << endl << "\t-t To test the WiFi connection using curl." << endl;
-      cout << "\t-d disconnect from the WiFi [REQUIRES SUDO PASSWORD ON LINUX]" << endl;
-      cout << "\t-c connect to WiFi [REQUIRES SUDO PASSWORD ON LINUX]" << endl;
+      cout << "\t-d disconnect from the WiFi [requires su passwd" << endl;
+      cout << "\t-c connect to WiFi [requires su passwd]" << endl;
     }
   }
 }

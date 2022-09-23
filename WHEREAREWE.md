@@ -3,3 +3,4 @@
 ## Update Log
 
 - Added Get Networks Function (In devbuild as it may not work entirely yet)
+- Added something to automatiicaly run with sudo/doas if no already ran with sudo/doas
