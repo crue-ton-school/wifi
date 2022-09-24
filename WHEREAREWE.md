@@ -4,3 +4,4 @@
 
 - Added Get Networks Function (In devbuild as it may not work entirely yet)
 - Added something to automatiicaly run with sudo/doas if no already ran with sudo/doas
+- Added fallback to su -c + other stuff

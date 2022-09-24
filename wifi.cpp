@@ -30,7 +30,9 @@ void getsuper() {
 		} else if (!system("which doas > /dev/null 2>&1")) {
 			elvCmd = "doas";
 		} else {
-			throw std::runtime_error("sudo nor doas found!\nRun with a similar program for some flags for them to work!\n\n");
+			cout << "sudo nor doas found!\n";
+			cout << "falling back on `su -c`!\n";
+			elvCmd = "su -c";
 		}
 	}
 }
@@ -68,12 +70,22 @@ int connect() {
 	getsuper();
 
   if (password.empty()) {
-    string cmd = elvCmd + " nmcli d wifi connect " + ssid;
-    system(cmd.c_str());
-		return 0;
+		if (elvCmd == "su -c") {
+			string cmd = elvCmd + " 'nmcli d wifi connect " + ssid + "'";
+			system(cmd.c_str());
+		} else {
+    	string cmd = elvCmd + " nmcli d wifi connect " + ssid;
+    	system(cmd.c_str());
+			return 0;
+		}
   } else {
-    string cmd = elvCmd + " nmcli d wifi connect " + ssid + " password " + password;
-    system(cmd.c_str());
+		if (elvCmd == "su -c") {
+			string cmd = elvCmd + " 'nmcli d wifi connect " + ssid + " password " + password+"'";
+			system(cmd.c_str());
+		} else {
+    	string cmd = elvCmd + " nmcli d wifi connect " + ssid + " password " + password;
+    	system(cmd.c_str());
+		}
   }
 	return 0;
 }
@@ -105,8 +117,7 @@ int testwifi() {
 }
 
 void get_networks() {
-	string networks = exec("nmcli -t -f active,ssid dev wifi");
-	networks = networks.substr(networks.find(":") + 1);	
+	string networks = exec("nmcli -t -f active,ssid dev wifi|sed 's/.*://g'");
 	cout << networks << endl;
 }
 
@@ -118,7 +129,6 @@ void disconnect() {
   system(cmd.c_str());
 }
 
-// add windows support to other flags
 int main(int argc, char * argv[]) {
   for (int i = 0; i < argc; ++i) {
     if (string(argv[i]) == "-t") {
@@ -131,7 +141,8 @@ int main(int argc, char * argv[]) {
 			get_networks();
     } else if (2 > argc) {
       cout << "All available flags:" << endl << "\t-t To test the WiFi connection using curl." << endl;
-      cout << "\t-d disconnect from the WiFi [requires su passwd" << endl;
+			cout << "\t-g get current WiFi ssid." << endl;
+      cout << "\t-d disconnect from the WiFi [requires su passwd]" << endl;
       cout << "\t-c connect to WiFi [requires su passwd]" << endl;
     }
   }
