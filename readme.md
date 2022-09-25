@@ -7,6 +7,12 @@ cd wifi
 sudo make install
 ```
 
+You can also compile the program in the directory where you cloned it, by doing:
+```sh
+cd (repo directory)
+sudo make local
+```
+
 ## Uninstall
 ```sh
 cd (repo directory)
