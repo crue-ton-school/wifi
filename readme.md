@@ -42,13 +42,13 @@ extern std::string knownNetworks[];
 extern std::string networksPasswords[];
 
 std::string knownNetworks[] = {
-				"CafeWiFi",
-				"HomeWiFi"
+	"CafeWiFi",
+	"HomeWiFi"
 };
 
 std::string networksPasswords[] = {
-				"",
-				"complicatedPassword"
+	"",
+	"complicatedPassword"
 };
 ```
 
@@ -62,7 +62,7 @@ TODO: ADD MORE INFO
 
 All basic usage flags:
 ```sh
-wifi				| runs known networks funciton which are configured in config file
+wifi			| runs known networks funciton which are configured in config file
 wifi -t 		| test wifi connection using curl
 wifi -c			| Connect to WiFi `easier`
 wifi -d 		| Disconnect from WiFi
