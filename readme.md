@@ -1,5 +1,7 @@
 # Network Manager WiFi Interface
 
+# ⚠️ THIS HAS BEEN MOVED TO [GITLAB](https://gitlab.com/crue-ton/wifi)! ⚠️
+
 ## Install
 ```sh
 git clone https://github.com/crue-ton-school/wifi.git
