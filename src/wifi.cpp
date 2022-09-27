@@ -6,6 +6,8 @@
 #include <unistd.h>
 #include <algorithm>
 #include <string>
+#include <sstream>
+#include "config.h"
 
 using namespace std;
 
@@ -64,7 +66,7 @@ int connect() {
   string ssid;
   string password;
   cout << "Enter WiFi SSID: ";
-	getline(cin, password);
+	getline(cin, ssid);
   cout << "Enter Password: ";
 	getline(cin, password);
 	getsuper();
@@ -139,11 +141,39 @@ int main(int argc, char * argv[]) {
       connect();
 		} else if (string(argv[i]) == "-g") {
 			get_networks();
-    } else if (2 > argc) {
-      cout << "All available flags:" << endl << "\t-t To test the WiFi connection using curl." << endl;
+		} else if (string(argv[i]) == "-h") {
+      cout << "All available flags:" << endl;
+			cout << "\t-t To test the WiFi connection using curl." << endl;
 			cout << "\t-g get current WiFi ssid." << endl;
       cout << "\t-d disconnect from the WiFi [requires su passwd]" << endl;
       cout << "\t-c connect to WiFi [requires su passwd]" << endl;
-    }
+    } else if (2 > argc) {
+			cout << "No arguments given!" << endl;
+			cout << "Using known networks now!" << endl;
+			
+			string _c;
+			string cmd;
+			int num = 0;
+			size_t n = sizeof(knownNetworks)/sizeof(knownNetworks[0]);
+			for (size_t i = 0;i < n;i++) {
+				num += 1;
+				cout << "["<<num<<"]" << knownNetworks[i] << endl;
+			}
+			cout << "> ";
+			getline(cin, _c);
+			stringstream _cc(_c);
+			int k = 0;
+			_cc >> k;
+			k -= 1;
+
+			if (networksPasswords[k] == "") {
+				cout << "password not found" << endl;
+				string cmd = elvCmd + " nmcli d wifi connect " + knownNetworks[k];
+				system(cmd.c_str());
+			} else {
+				string cmd = elvCmd + " nmcli d wifi connect " + knownNetworks[k] +" password "+networksPasswords[k];
+				system(cmd.c_str());
+			}
+		}
   }
 }
